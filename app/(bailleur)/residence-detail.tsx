@@ -48,7 +48,7 @@ export default function ResidenceDetail() {
 
   const apartments = appsData?.results ?? [];
   const isLoading = loadingRes || loadingApps;
-  const coverPhotos = (residence?.medias ?? []).filter((m: any) => m.type_media === 'photo');
+  const coverPhotos = (residence?.medias ?? []).filter((m: any) => m.type_media.startsWith('photo'));
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">

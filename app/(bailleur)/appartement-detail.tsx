@@ -76,7 +76,7 @@ export default function AppartementDetail() {
   const isLoading = loadingApp || loadingContracts;
   const contracts = contractsData?.results ?? [];
   const activeContract = contracts.find((c: any) => c.statut === 'actif' || c.statut === 'actif_impaye');
-  const coverPhotos = (apartment?.medias ?? []).filter((m: any) => m.type_media === 'photo');
+  const coverPhotos = (apartment?.medias ?? []).filter((m: any) => m.type_media.startsWith('photo'));
 
   const occ = apartment ? (OCC_STATUS[apartment.statut_occupation] ?? OCC_STATUS.disponible) : null;
 
