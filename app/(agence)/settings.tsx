@@ -39,8 +39,8 @@ export default function SettingsScreen() {
     admin: 'Administrateur',
     manager: 'Manager',
     accountant: 'Comptable',
-    proprietaire: 'Propriétaire',
-    locataire: 'Locataire',
+    landlord: 'Propriétaire',
+    tenant: 'Locataire',
     employe: 'Employé',
   };
 

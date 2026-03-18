@@ -26,13 +26,13 @@ function RootNavigator() {
 
     if (user && inAuthGroup) {
       // Redirect to the correct portal based on role
-      if (user.role === 'admin' || user.role === 'manager' || user.role === 'accountant') {
+      if (user.user_type === 'admin' || user.user_type === 'manager' || user.user_type === 'accountant') {
         router.replace('/(agence)');
-      } else if (user.role === 'proprietaire') {
+      } else if (user.user_type === 'landlord') {
         router.replace('/(bailleur)');
-      } else if (user.role === 'locataire') {
+      } else if (user.user_type === 'tenant') {
         router.replace('/(locataire)');
-      } else if (user.role === 'employe') {
+      } else if (user.user_type === 'employe') {
         router.replace('/(employe)');
       }
     }

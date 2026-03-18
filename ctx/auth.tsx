@@ -2,14 +2,14 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import * as SecureStore from 'expo-secure-store';
 import { api } from '@/lib/api';
 
-type Role = 'admin' | 'manager' | 'proprietaire' | 'locataire' | 'employe' | 'accountant';
+type UserType = 'admin' | 'manager' | 'landlord' | 'tenant' | 'employe' | 'accountant';
 
 interface AuthUser {
   id: number;
   email: string;
   first_name: string;
   last_name: string;
-  role: Role;
+  user_type: UserType;
   organization?: number;
 }
 
