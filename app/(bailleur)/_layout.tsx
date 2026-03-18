@@ -23,6 +23,20 @@ export default function BailleurLayout() {
       <Tabs.Screen name="contracts" options={{ title: 'Contrats', tabBarIcon: ({ color, size }) => <FileText color={color} size={size - 2} /> }} />
       <Tabs.Screen name="payments" options={{ title: 'Revenus', tabBarIcon: ({ color, size }) => <CreditCard color={color} size={size - 2} /> }} />
       <Tabs.Screen name="documents" options={{ title: 'Documents', tabBarIcon: ({ color, size }) => <FolderOpen color={color} size={size - 2} /> }} />
+
+      {/* Écrans cachés de la barre d'onglets */}
+      <Tabs.Screen
+        name="residence-detail"
+        options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }}
+      />
+      <Tabs.Screen
+        name="appartement-detail"
+        options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
   );
 }
