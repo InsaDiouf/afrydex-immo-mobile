@@ -23,6 +23,7 @@ export default function LocataireLayout() {
       <Tabs.Screen name="rent" options={{ title: 'Loyers', tabBarIcon: ({ color, size }) => <CreditCard color={color} size={size - 2} /> }} />
       <Tabs.Screen name="maintenance" options={{ title: 'Signalement', tabBarIcon: ({ color, size }) => <Wrench color={color} size={size - 2} /> }} />
       <Tabs.Screen name="documents" options={{ title: 'Documents', tabBarIcon: ({ color, size }) => <FolderOpen color={color} size={size - 2} /> }} />
+      <Tabs.Screen name="contract-detail" options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );
 }
