@@ -327,6 +327,36 @@ export default function LocataireContractDetail() {
               </>
             )}
           </View>
+
+          {/* PDFs */}
+          {contract.fichier_contrat && (
+            <TouchableOpacity
+              onPress={() => Linking.openURL(contract.fichier_contrat!)}
+              className="flex-row items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100"
+              activeOpacity={0.7}>
+              <View className="w-9 h-9 bg-blue-50 rounded-xl items-center justify-center flex-shrink-0">
+                <Download size={16} color="#2563eb" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-gray-900">Télécharger le contrat PDF</Text>
+                <Text className="text-xs text-gray-400 mt-0.5">Document signé</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          {workflow?.rapport_etat_lieux && (
+            <TouchableOpacity
+              onPress={() => Linking.openURL(workflow.rapport_etat_lieux!)}
+              className="flex-row items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100"
+              activeOpacity={0.7}>
+              <View className="w-9 h-9 rounded-xl items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f5f3ff' }}>
+                <Download size={16} color="#7c3aed" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-gray-900">Télécharger l'état des lieux</Text>
+                <Text className="text-xs text-gray-400 mt-0.5">Rapport d'entrée signé</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
