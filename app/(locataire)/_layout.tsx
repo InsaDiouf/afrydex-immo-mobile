@@ -1,12 +1,24 @@
+import { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, FileText, CreditCard, Wrench, FolderOpen } from 'lucide-react-native';
+import { api } from '@/lib/api';
 
 export default function LocataireLayout() {
+  const [primaryColor, setPrimaryColor] = useState('#16a34a');
+
+  useEffect(() => {
+    api.get('/contracts/').then(({ data }) => {
+      const contracts = data.results ?? data ?? [];
+      const color = contracts[0]?.org_primary_color;
+      if (color) setPrimaryColor(color);
+    }).catch(() => { /* keep default */ });
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#16a34a',
+        tabBarActiveTintColor: primaryColor,
         tabBarInactiveTintColor: '#9ca3af',
         tabBarStyle: {
           backgroundColor: '#ffffff',

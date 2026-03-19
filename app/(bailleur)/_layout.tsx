@@ -1,12 +1,23 @@
+import { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, Building2, FileText, CreditCard, FolderOpen } from 'lucide-react-native';
+import { api } from '@/lib/api';
 
 export default function BailleurLayout() {
+  const [primaryColor, setPrimaryColor] = useState('#7c3aed');
+
+  useEffect(() => {
+    api.get('/organizations/config/').then(({ data }) => {
+      if (data?.primaryColor) setPrimaryColor(data.primaryColor);
+      else if (data?.primary_color) setPrimaryColor(data.primary_color);
+    }).catch(() => { /* keep default */ });
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#7c3aed',
+        tabBarActiveTintColor: primaryColor,
         tabBarInactiveTintColor: '#9ca3af',
         tabBarStyle: {
           backgroundColor: '#ffffff',

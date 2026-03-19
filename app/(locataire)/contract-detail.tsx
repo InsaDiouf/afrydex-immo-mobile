@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SignatureScreen from 'react-native-signature-canvas';
 import {
-  Home, CheckCircle2, Clock, MapPin, PenLine, RotateCcw, ArrowLeft, Download,
+  Home, CheckCircle2, Clock, MapPin, PenLine, RotateCcw, ArrowLeft, Download, ShieldCheck,
 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api } from '@/lib/api';
@@ -46,10 +46,12 @@ const SIG_WEB_STYLE = `.m-sig-pad--footer { display: none; } body, html { margin
 
 function SignaturePad({
   title,
+  description,
   onSubmit,
   submitting,
 }: {
   title: string;
+  description: string;
   onSubmit: (sig: string) => Promise<void>;
   submitting: boolean;
 }) {
@@ -57,9 +59,18 @@ function SignaturePad({
   const [isEmpty, setIsEmpty] = useState(true);
 
   return (
-    <View>
-      <Text className="text-xs text-amber-700 mb-3">{title} — tracez votre signature ci-dessous.</Text>
-      <View className="rounded-xl overflow-hidden border border-gray-200 bg-white" style={{ height: 180 }}>
+    <View className="rounded-2xl p-4" style={{ borderWidth: 2, borderColor: '#7c3aed', backgroundColor: '#faf5ff' }}>
+      <View className="flex-row items-start gap-3 mb-4">
+        <View className="w-9 h-9 rounded-xl items-center justify-center flex-shrink-0" style={{ backgroundColor: '#ede9fe' }}>
+          <PenLine size={16} color="#7c3aed" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-sm font-bold" style={{ color: '#4c1d95' }}>{title}</Text>
+          <Text className="text-xs mt-0.5" style={{ color: '#7c3aed' }}>{description}</Text>
+        </View>
+      </View>
+
+      <View className="rounded-xl overflow-hidden bg-white" style={{ height: 160, borderWidth: 2, borderStyle: 'dashed', borderColor: '#c4b5fd' }}>
         <SignatureScreen
           ref={sigRef}
           onOK={async (sig) => { await onSubmit(sig); }}
@@ -69,20 +80,22 @@ function SignaturePad({
           penColor="#1e1b4b"
         />
       </View>
-      <View className="flex-row gap-2 mt-3 justify-end">
-        <TouchableOpacity onPress={() => { sigRef.current?.clearSignature(); setIsEmpty(true); }}
+
+      <View className="flex-row gap-2 mt-3">
+        <TouchableOpacity
+          onPress={() => { sigRef.current?.clearSignature(); setIsEmpty(true); }}
           disabled={submitting}
           className="flex-row items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 bg-white">
-          <RotateCcw size={14} color="#6b7280" />
-          <Text className="text-sm text-gray-600 font-medium">Effacer</Text>
+          <RotateCcw size={13} color="#6b7280" />
+          <Text className="text-xs text-gray-600 font-medium">Effacer</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => { if (!isEmpty) sigRef.current?.readSignature(); }}
           disabled={submitting || isEmpty}
-          className="flex-row items-center gap-1.5 px-4 py-2 rounded-lg"
-          style={{ backgroundColor: isEmpty || submitting ? '#9ca3af' : '#16a34a' }}>
-          {submitting ? <ActivityIndicator size="small" color="white" /> : <PenLine size={14} color="white" />}
-          <Text className="text-sm text-white font-semibold ml-1">Valider</Text>
+          className="flex-1 flex-row items-center justify-center gap-2 py-2.5 rounded-xl"
+          style={{ backgroundColor: isEmpty || submitting ? '#a78bfa' : '#7c3aed' }}>
+          {submitting ? <ActivityIndicator size="small" color="white" /> : <CheckCircle2 size={16} color="white" />}
+          <Text className="text-sm text-white font-bold">{submitting ? 'Enregistrement…' : 'Valider ma signature'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -201,24 +214,22 @@ export default function LocataireContractDetail() {
 
           {/* Signature contrat */}
           {needsContractSign && (
-            <View className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-              <View className="flex-row items-center gap-2 mb-3">
-                <PenLine size={16} color="#92400e" />
-                <Text className="text-sm font-bold text-amber-800">Signature requise</Text>
-              </View>
-              <SignaturePad title="Signer le contrat de location" onSubmit={handleSignContract} submitting={submittingContract} />
-            </View>
+            <SignaturePad
+              title="Votre signature est requise — Contrat"
+              description="Le contrat est prêt. Signez ci-dessous pour valider votre acceptation."
+              onSubmit={handleSignContract}
+              submitting={submittingContract}
+            />
           )}
 
           {/* Signature EDL */}
           {needsEDLSign && (
-            <View className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-              <View className="flex-row items-center gap-2 mb-3">
-                <PenLine size={16} color="#92400e" />
-                <Text className="text-sm font-bold text-amber-800">Signature état des lieux requise</Text>
-              </View>
-              <SignaturePad title="Signer l'état des lieux d'entrée" onSubmit={handleSignEDL} submitting={submittingEDL} />
-            </View>
+            <SignaturePad
+              title="Votre signature est requise — État des lieux"
+              description="L'état des lieux d'entrée est établi. Signez pour le valider."
+              onSubmit={handleSignEDL}
+              submitting={submittingEDL}
+            />
           )}
 
           {/* Logement */}
