@@ -37,6 +37,10 @@ export default function BailleurLayout() {
         name="settings"
         options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }}
       />
+      <Tabs.Screen
+        name="contrat-detail"
+        options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
   );
 }
