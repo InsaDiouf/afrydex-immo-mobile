@@ -329,7 +329,7 @@ export default function LocataireContractDetail() {
           </View>
 
           {/* PDFs */}
-          {contract.fichier_contrat && (
+          {contract.fichier_contrat && contract.signe_par_locataire && contract.signe_par_bailleur && (
             <TouchableOpacity
               onPress={() => Linking.openURL(contract.fichier_contrat!)}
               className="flex-row items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100"
@@ -343,7 +343,7 @@ export default function LocataireContractDetail() {
               </View>
             </TouchableOpacity>
           )}
-          {workflow?.rapport_etat_lieux && (
+          {workflow?.rapport_etat_lieux && workflow.signature_locataire_etat_lieux && workflow.signature_bailleur_etat_lieux && (
             <TouchableOpacity
               onPress={() => Linking.openURL(workflow.rapport_etat_lieux!)}
               className="flex-row items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100"
