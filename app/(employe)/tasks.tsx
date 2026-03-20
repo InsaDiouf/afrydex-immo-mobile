@@ -15,20 +15,34 @@ const PRIORITY: Record<string, { bg: string; text: string; label: string }> = {
 const STATUS_DOT: Record<string, string> = {
   complete: '#22c55e', valide: '#22c55e',
   en_cours: '#3b82f6',
-  signale: '#f59e0b', planifie: '#a855f7',
+  signale: '#f59e0b', planifie: '#a855f7', assigne: '#f59e0b',
   annule: '#d1d5db',
 };
 
-const FILTERS = ['Tous', "Aujourd'hui", 'À venir', 'Terminés'] as const;
+const FILTERS = ['Tous', "Aujourd'hui", 'À venir', 'En cours', 'Planifiés', 'Terminés'] as const;
+
+function isToday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const t = new Date();
+  return d.getFullYear() === t.getFullYear() && d.getMonth() === t.getMonth() && d.getDate() === t.getDate();
+}
+
+function isFuture(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  return d.getTime() > t.getTime();
+}
 
 export default function EmployeTasks() {
   const [filter, setFilter] = useState<typeof FILTERS[number]>('Tous');
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['employe-dashboard'],
+    queryKey: ['employe-tasks'],
     queryFn: async () => {
-      const { data } = await api.get('/employee-dashboard/');
+      const { data } = await api.get('/travaux/');
       return data;
     },
   });
@@ -38,19 +52,22 @@ export default function EmployeTasks() {
       const { data } = await api.post(`/employee-dashboard/${id}/start_work/`);
       return data;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employe-dashboard'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employe-tasks'] }),
   });
 
-  const todayWork = data?.today_work ?? [];
-  const upcomingWork = data?.upcoming_work ?? [];
-  const allTasks = [...todayWork, ...upcomingWork];
-  const completed = allTasks.filter((t: any) => t.statut === 'complete' || t.statut === 'valide');
+  const travaux: any[] = Array.isArray(data) ? data : (data?.results ?? []);
+
+  const todayWork = travaux.filter(t => t.date_prevue && isToday(t.date_prevue));
+  const upcomingWork = travaux.filter(t => t.date_prevue && isFuture(t.date_prevue));
+  const completed = travaux.filter(t => t.statut === 'complete' || t.statut === 'valide');
 
   const displayed = (() => {
     if (filter === "Aujourd'hui") return todayWork;
     if (filter === 'À venir') return upcomingWork;
+    if (filter === 'En cours') return travaux.filter(t => t.statut === 'en_cours');
+    if (filter === 'Planifiés') return travaux.filter(t => ['planifie', 'signale', 'assigne'].includes(t.statut));
     if (filter === 'Terminés') return completed;
-    return allTasks;
+    return travaux;
   })();
 
   return (
@@ -110,7 +127,7 @@ export default function EmployeTasks() {
           displayed.map((task: any) => {
             const p = PRIORITY[task.priorite] ?? PRIORITY.normale;
             const dot = STATUS_DOT[task.statut] ?? '#d1d5db';
-            const canStart = task.statut === 'signale' || task.statut === 'planifie';
+            const canStart = task.statut === 'signale' || task.statut === 'planifie' || task.statut === 'assigne';
             return (
               <View key={task.id} className="bg-white rounded-2xl border border-gray-100 p-4">
                 <View className="flex-row items-start gap-3">

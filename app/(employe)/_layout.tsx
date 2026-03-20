@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, ClipboardList, Wrench, ShoppingCart, LogOut } from 'lucide-react-native';
+import { LayoutDashboard, ClipboardList, ShoppingCart } from 'lucide-react-native';
 
 export default function EmployeLayout() {
   return (
@@ -20,7 +20,7 @@ export default function EmployeLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Tableau de bord', tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size - 2} /> }} />
       <Tabs.Screen name="tasks" options={{ title: 'Tâches', tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size - 2} /> }} />
-      <Tabs.Screen name="maintenance" options={{ title: 'Travaux', tabBarIcon: ({ color, size }) => <Wrench color={color} size={size - 2} /> }} />
+      <Tabs.Screen name="maintenance" options={{ href: null }} />
       <Tabs.Screen name="purchases" options={{ title: 'Achats', tabBarIcon: ({ color, size }) => <ShoppingCart color={color} size={size - 2} /> }} />
     </Tabs>
   );
