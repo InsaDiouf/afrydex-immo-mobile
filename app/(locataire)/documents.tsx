@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { View, Text, ActivityIndicator, TouchableOpacity, Linking, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FolderOpen, FileText, Receipt, ClipboardList, Download, ChevronRight } from 'lucide-react-native';
+import { FolderOpen, FileText, Receipt, ClipboardList, Download, ChevronRight, Key } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api';
 
@@ -71,6 +71,7 @@ export default function LocataireDocuments() {
           renderItem={({ item: { contract, workflow } }) => {
             const contratPdfUrl = contract.fichier_contrat ?? null;
             const edlPdfUrl = workflow?.rapport_etat_lieux ?? null;
+            const attestationClesUrl = (workflow as any)?.fichier_remise_cles ?? null;
 
             const docs = [
               {
@@ -88,6 +89,14 @@ export default function LocataireDocuments() {
                 color: '#7c3aed',
                 bg: '#f5f3ff',
                 action: edlPdfUrl ? () => Linking.openURL(edlPdfUrl) : null,
+              },
+              {
+                label: 'Attestation de remise des clés',
+                description: attestationClesUrl ? 'PDF disponible' : 'Non encore disponible',
+                icon: Key,
+                color: '#d97706',
+                bg: '#fffbeb',
+                action: attestationClesUrl ? () => Linking.openURL(attestationClesUrl) : null,
               },
               {
                 label: 'Quittances de loyer',

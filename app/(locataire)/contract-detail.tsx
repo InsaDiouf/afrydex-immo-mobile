@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SignatureScreen from 'react-native-signature-canvas';
 import {
-  Home, CheckCircle2, Clock, MapPin, PenLine, RotateCcw, ArrowLeft, Download, ShieldCheck,
+  Home, CheckCircle2, Clock, MapPin, PenLine, RotateCcw, ArrowLeft, Download, ShieldCheck, Key,
 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { api } from '@/lib/api';
@@ -340,6 +340,20 @@ export default function LocataireContractDetail() {
               <View className="flex-1">
                 <Text className="text-sm font-semibold text-gray-900">Télécharger le contrat PDF</Text>
                 <Text className="text-xs text-gray-400 mt-0.5">Document signé</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          {(workflow as any)?.fichier_remise_cles && (
+            <TouchableOpacity
+              onPress={() => Linking.openURL((workflow as any).fichier_remise_cles)}
+              className="flex-row items-center gap-3 px-4 py-4 bg-white rounded-2xl border border-gray-100"
+              activeOpacity={0.7}>
+              <View className="w-9 h-9 rounded-xl items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fffbeb' }}>
+                <Key size={16} color="#d97706" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-gray-900">Attestation de remise des clés</Text>
+                <Text className="text-xs text-gray-400 mt-0.5">Document officiel</Text>
               </View>
             </TouchableOpacity>
           )}
