@@ -34,6 +34,7 @@ export default function LocataireMaintenance() {
   const [titre, setTitre] = useState('');
   const [description, setDescription] = useState('');
   const [priorite, setPriorite] = useState('normale');
+  const [typeTravail, setTypeTravail] = useState('autre');
 
   const { data, isLoading } = useQuery<{ results?: MaintenanceItem[] } | MaintenanceItem[]>({
     queryKey: ['locataire-maintenance'],
@@ -53,12 +54,13 @@ export default function LocataireMaintenance() {
       setTitre('');
       setDescription('');
       setPriorite('normale');
+      setTypeTravail('autre');
     },
   });
 
   const handleSubmit = () => {
     if (!titre.trim()) return;
-    mutation.mutate({ titre, description, priorite });
+    mutation.mutate({ titre, description, priorite, nature: 'reactif', type_travail: typeTravail });
   };
 
   return (
@@ -112,6 +114,32 @@ export default function LocataireMaintenance() {
                 value={description}
                 onChangeText={setDescription}
               />
+            </View>
+
+            <View>
+              <Text className="text-xs font-semibold text-gray-500 mb-1.5">Type de problème</Text>
+              <View className="flex-row gap-2 flex-wrap">
+                {[
+                  { value: 'plomberie', label: 'Plomberie' },
+                  { value: 'electricite', label: 'Électricité' },
+                  { value: 'menuiserie', label: 'Menuiserie' },
+                  { value: 'serrurerie', label: 'Serrurerie' },
+                  { value: 'climatisation', label: 'Clim' },
+                  { value: 'peinture', label: 'Peinture' },
+                  { value: 'autre', label: 'Autre' },
+                ].map(t => (
+                  <TouchableOpacity
+                    key={t.value}
+                    onPress={() => setTypeTravail(t.value)}
+                    className={`px-3 py-1.5 rounded-full border ${typeTravail === t.value ? 'bg-green-600 border-green-600' : 'border-gray-200 bg-white'}`}
+                    activeOpacity={0.7}
+                  >
+                    <Text className={`text-xs font-semibold ${typeTravail === t.value ? 'text-white' : 'text-gray-500'}`}>
+                      {t.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             <View>
