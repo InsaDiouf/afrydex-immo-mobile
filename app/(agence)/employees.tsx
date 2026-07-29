@@ -1,113 +1,158 @@
-import { useQuery } from '@tanstack/react-query';
-import { FlatList, View, Text, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { FlatList, View, Text, TouchableOpacity, ActivityIndicator, TextInput, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Users, Phone, Mail, Briefcase, ChevronRight } from 'lucide-react-native';
+import { useAgencyTheme } from '@/ctx/agencyTheme';
 import { api } from '@/lib/api';
+import { Card, Avatar, Ic, Chips, DetailHeader, Badge, initials } from '@/components/agence/ui';
 
 interface Employee {
   id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  telephone?: string;
-  poste?: string;
+  user: number;
+  user_nom: string;
+  user_email?: string;
+  specialite: string;
+  date_embauche?: string;
   statut?: string;
-  tasks_count?: number;
+  is_available?: boolean;
 }
 
-export default function EmployeesScreen() {
-  const router = useRouter();
+const SPECIALITE_LABEL: Record<string, string> = {
+  technique:     'Technique',
+  menage:        'Ménage',
+  jardinage:     'Jardinage',
+  peinture:      'Peinture',
+  plomberie:     'Plomberie',
+  electricite:   'Électricité',
+  serrurerie:    'Serrurerie',
+  climatisation: 'Climatisation',
+  polyvalent:    'Polyvalent',
+};
 
-  const { data, isLoading } = useQuery<{ results: Employee[] }>({
+const SPECIALITE_ICON: Record<string, string> = {
+  plomberie:     'drop',
+  electricite:   'bolt',
+  serrurerie:    'key',
+  climatisation: 'building',
+  peinture:      'paint',
+};
+
+const TECH_SPECIALITES = ['plomberie', 'electricite', 'serrurerie', 'climatisation', 'menuiserie', 'technique'];
+const STAFF_SPECIALITES = ['menage', 'jardinage', 'peinture', 'polyvalent'];
+
+const FILTERS = ['Tous', 'Techniciens', 'Staff'];
+
+export default function EmployeesScreen() {
+  const { theme: t } = useAgencyTheme();
+  const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('Tous');
+
+  const { data, isLoading } = useQuery<{ results: Employee[] } | Employee[]>({
     queryKey: ['employees'],
-    queryFn: async () => {
-      const { data } = await api.get('/employees/');
-      return data;
-    },
+    queryFn: async () => { const { data } = await api.get('/employees/'); return data; },
   });
 
-  const employees = data?.results ?? [];
+  const all: Employee[] = Array.isArray(data) ? data : (data?.results ?? []);
 
-  const getInitials = (e: Employee) =>
-    `${e.first_name?.[0] ?? ''}${e.last_name?.[0] ?? ''}`.toUpperCase();
-
-  const COLORS = ['#2563eb', '#7c3aed', '#16a34a', '#d97706', '#dc2626', '#0891b2'];
+  const employees = all.filter(e => {
+    const name = (e.user_nom ?? '').toLowerCase();
+    const matchSearch = !search || name.includes(search.toLowerCase())
+      || (e.user_email ?? '').toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === 'Tous'
+      || (filter === 'Techniciens' && TECH_SPECIALITES.includes(e.specialite))
+      || (filter === 'Staff'       && STAFF_SPECIALITES.includes(e.specialite));
+    return matchSearch && matchFilter;
+  });
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-row items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="p-1.5 rounded-xl bg-gray-100" activeOpacity={0.7}>
-          <ArrowLeft size={18} color="#374151" />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <Text className="text-base font-bold text-gray-900">Employés</Text>
-          <Text className="text-xs text-gray-400">{employees.length} membre(s)</Text>
-        </View>
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <DetailHeader t={t} title="Employés" onBack={() => router.back()}
+        right={
+          <TouchableOpacity activeOpacity={0.8}
+            onPress={() => router.push('/(agence)/employee-new')}
+            style={{ width: 38, height: 38, borderRadius: 12,
+              backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+            <Ic name="plus" size={20} color="#fff" sw={2.4} />
+          </TouchableOpacity>
+        }
+      />
 
-      {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#2563eb" />
-        </View>
-      ) : (
-        <FlatList
-          data={employees}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 16, gap: 10 }}
-          renderItem={({ item, index }) => {
-            const color = COLORS[index % COLORS.length];
-            return (
-              <View className="bg-white rounded-2xl border border-gray-100 p-4 flex-row items-center gap-3">
-                {/* Avatar */}
-                <View
-                  className="w-11 h-11 rounded-2xl items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: color + '18' }}
-                >
-                  <Text className="text-sm font-bold" style={{ color }}>{getInitials(item)}</Text>
-                </View>
-
-                <View className="flex-1 min-w-0">
-                  <Text className="text-sm font-bold text-gray-900">
-                    {item.first_name} {item.last_name}
-                  </Text>
-                  {item.poste && (
-                    <View className="flex-row items-center gap-1 mt-0.5">
-                      <Briefcase size={11} color="#9ca3af" />
-                      <Text className="text-xs text-gray-400">{item.poste}</Text>
-                    </View>
-                  )}
-                  <View className="flex-row gap-3 mt-2">
-                    {item.telephone && (
-                      <TouchableOpacity
-                        className="flex-row items-center gap-1"
-                        onPress={() => Linking.openURL(`tel:${item.telephone}`)}
-                        activeOpacity={0.7}
-                      >
-                        <Phone size={12} color="#2563eb" />
-                        <Text className="text-xs text-blue-600">{item.telephone}</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-
-                {item.tasks_count !== undefined && (
-                  <View className="items-center bg-gray-50 rounded-xl px-2.5 py-1.5">
-                    <Text className="text-lg font-bold text-gray-900">{item.tasks_count}</Text>
-                    <Text className="text-[9px] text-gray-400">tâches</Text>
-                  </View>
-                )}
-              </View>
-            );
-          }}
-          ListEmptyComponent={
-            <View className="items-center py-16">
-              <Users size={40} color="#d1d5db" />
-              <Text className="text-gray-400 mt-3 text-sm">Aucun employé</Text>
+      <FlatList
+        data={employees}
+        keyExtractor={item => item.id.toString()}
+        ListHeaderComponent={
+          <View style={{ padding: 20, paddingTop: 6, gap: 14 }}>
+            {/* Search */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10,
+              height: 46, backgroundColor: t.surface, borderWidth: 1,
+              borderColor: t.border, borderRadius: 13, paddingHorizontal: 14,
+              ...(t.shadowSoft as any) }}>
+              <Ic name="search" size={18} color={t.text3} sw={1.9} />
+              <TextInput
+                style={{ flex: 1, fontSize: 14.5, color: t.text }}
+                placeholder="Rechercher un employé…"
+                placeholderTextColor={t.text3}
+                value={search}
+                onChangeText={setSearch}
+              />
             </View>
-          }
-        />
-      )}
-    </SafeAreaView>
+            {/* Filters */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8 }}>
+              <Chips t={t} items={FILTERS} active={filter} onSelect={setFilter} />
+            </ScrollView>
+          </View>
+        }
+        contentContainerStyle={{ paddingHorizontal: 20 }}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: t.border }} />}
+        renderItem={({ item }) => {
+          const icon = SPECIALITE_ICON[item.specialite] ?? 'user';
+          const label = SPECIALITE_LABEL[item.specialite] ?? item.specialite;
+          return (
+            <TouchableOpacity activeOpacity={0.75}
+              onPress={() => router.push(`/(agence)/employee/${item.id}`)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center',
+                gap: 13, paddingVertical: 13 }}>
+                <Avatar t={t} initials={initials(item.user_nom ?? '—')} size={46} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ fontWeight: '700', fontSize: 14.5, color: t.text }}>
+                    {item.user_nom ?? '—'}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center',
+                    gap: 5, marginTop: 2 }}>
+                    <Ic name={icon} size={13} color={t.text3} sw={1.9} />
+                    <Text style={{ fontSize: 12.5, color: t.text2 }}>{label}</Text>
+                  </View>
+                </View>
+                <Ic name="chevR" size={18} color={t.text3} sw={2} />
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+        ListEmptyComponent={
+          isLoading ? (
+            <View style={{ paddingTop: 60, alignItems: 'center' }}>
+              <ActivityIndicator color={t.accent} />
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', paddingTop: 60, gap: 12 }}>
+              <View style={{ width: 72, height: 72, borderRadius: 36,
+                backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Ic name="user" size={32} color={t.accentText} sw={1.6} />
+              </View>
+              <Text style={{ fontWeight: '700', fontSize: 16, color: t.text }}>
+                Aucun employé
+              </Text>
+              <Text style={{ fontSize: 13.5, color: t.text2, textAlign: 'center', maxWidth: 240 }}>
+                {search ? 'Aucun résultat pour cette recherche.' : 'Ajoutez votre premier employé avec le bouton +'}
+              </Text>
+            </View>
+          )
+        }
+        ListFooterComponent={<View style={{ height: 32 }} />}
+      />
+    </View>
   );
 }

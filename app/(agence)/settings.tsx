@@ -1,149 +1,208 @@
-import { useQuery } from '@tanstack/react-query';
-import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  ArrowLeft, Building2, Mail, Phone, Globe, MapPin,
-  User, Shield, Key, ChevronRight, LogOut,
-} from 'lucide-react-native';
 import { useAuth } from '@/ctx/auth';
+import { useAgencyTheme } from '@/ctx/agencyTheme';
 import { api } from '@/lib/api';
+import { openPrivacy, openTerms, openDataDeletion } from '@/lib/legal';
+import {
+  Card, DetailHeader, Tile, Avatar, Badge, Divider, KV, Ic, initials,
+} from '@/components/agence/ui';
 
-interface Organization {
-  nom: string;
-  email?: string;
-  telephone?: string;
-  adresse?: string;
-  ville?: string;
-  pays?: string;
-  site_web?: string;
-  plan_abonnement?: string;
+const ROLE_LABELS: Record<string, string> = {
+  admin:      'Administrateur',
+  manager:    'Manager',
+  accountant: 'Comptable',
+  landlord:   'Propriétaire',
+  tenant:     'Locataire',
+  employe:    'Employé',
+};
+
+function Section({ label }: { label: string }) {
+  return (
+    <Text style={{ fontWeight: '700', fontSize: 13, letterSpacing: 0.4, textTransform: 'uppercase', marginTop: 8, marginBottom: 8, color: '#888' }}>
+      {label}
+    </Text>
+  );
 }
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { theme: t } = useAgencyTheme();
 
-  const { data: org, isLoading } = useQuery<Organization>({
-    queryKey: ['organization'],
-    queryFn: async () => {
-      const { data } = await api.get('/organization/');
-      return data;
-    },
-  });
+  const [showPwd, setShowPwd] = useState(false);
+  const [oldPwd, setOldPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+  const [pwdSuccess, setPwdSuccess] = useState(false);
 
-  const getInitials = () =>
-    `${user?.first_name?.[0] ?? ''}${user?.last_name?.[0] ?? ''}`.toUpperCase();
+  const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Utilisateur';
+  const role = ROLE_LABELS[user?.user_type ?? ''] ?? user?.user_type ?? '';
 
-  const ROLE_LABELS: Record<string, string> = {
-    admin: 'Administrateur',
-    manager: 'Manager',
-    accountant: 'Comptable',
-    landlord: 'Propriétaire',
-    tenant: 'Locataire',
-    employe: 'Employé',
+  const handleChangePassword = async () => {
+    setPwdError(null);
+    setPwdSuccess(false);
+    if (!oldPwd || !newPwd || !confirmPwd) {
+      setPwdError('Tous les champs sont requis.');
+      return;
+    }
+    if (newPwd.length < 8) {
+      setPwdError('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setPwdError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+    setPwdLoading(true);
+    try {
+      await api.post('/auth/change-password/', { current_password: oldPwd, new_password: newPwd });
+      setPwdSuccess(true);
+      setOldPwd(''); setNewPwd(''); setConfirmPwd('');
+      setShowPwd(false);
+    } catch (err: any) {
+      setPwdError(err?.response?.data?.error ?? err?.response?.data?.detail ?? 'Erreur lors du changement.');
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
+  const inputStyle = {
+    borderWidth: 1, borderColor: t.border, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 11,
+    fontSize: 14, color: t.text, backgroundColor: t.surface,
+    marginBottom: 10,
+  } as const;
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-row items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="p-1.5 rounded-xl bg-gray-100" activeOpacity={0.7}>
-          <ArrowLeft size={18} color="#374151" />
-        </TouchableOpacity>
-        <Text className="text-base font-bold text-gray-900">Paramètres</Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <DetailHeader t={t} title="Paramètres" onBack={() => router.back()} />
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 12 }}>
-
-        {/* Profil utilisateur */}
-        <View className="bg-white rounded-2xl border border-gray-100 p-4">
-          <View className="flex-row items-center gap-4">
-            <View className="w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center">
-              <Text className="text-white text-lg font-bold">{getInitials()}</Text>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20, paddingTop: 8 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* User card */}
+        <Card t={t} pad={16} style={{ marginBottom: 22 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <Avatar t={t} initials={initials(name)} size={56} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ fontWeight: '700', fontSize: 17, color: t.text, letterSpacing: -0.2 }}>{name}</Text>
+              <Text style={{ fontSize: 12.5, color: t.text2, marginTop: 2 }} numberOfLines={1}>{user?.email}</Text>
             </View>
-            <View className="flex-1">
-              <Text className="text-base font-bold text-gray-900">
-                {user?.first_name} {user?.last_name}
-              </Text>
-              <Text className="text-sm text-gray-400 mt-0.5">{user?.email}</Text>
-              <View className="mt-1.5 self-start px-2.5 py-0.5 bg-blue-50 rounded-full">
-                <Text className="text-xs font-semibold text-blue-600">
-                  {ROLE_LABELS[user?.role ?? ''] ?? user?.role}
-                </Text>
-              </View>
-            </View>
+            <Badge t={t} tone="info">{role}</Badge>
           </View>
-        </View>
+        </Card>
 
-        {/* Organisation */}
-        {isLoading ? (
-          <View className="bg-white rounded-2xl border border-gray-100 p-6 items-center">
-            <ActivityIndicator color="#2563eb" />
-          </View>
-        ) : org && (
-          <View className="bg-white rounded-2xl border border-gray-100 p-4">
-            <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Organisation</Text>
-            <Text className="text-base font-bold text-gray-900 mb-3">{org.nom}</Text>
-            {[
-              { icon: Mail, label: org.email },
-              { icon: Phone, label: org.telephone },
-              { icon: MapPin, label: [org.adresse, org.ville, org.pays].filter(Boolean).join(', ') },
-              { icon: Globe, label: org.site_web },
-            ].filter((r) => r.label).map((r, i) => {
-              const Icon = r.icon;
-              return (
-                <View key={i} className="flex-row items-center gap-2 py-2 border-b border-gray-50 last:border-0">
-                  <Icon size={14} color="#9ca3af" />
-                  <Text className="text-sm text-gray-600 flex-1">{r.label}</Text>
+        {/* Sécurité */}
+        <Section label="Sécurité" />
+        <Card t={t} pad={14} style={{ marginBottom: 22 }}>
+          {/* Change password toggle */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => { setShowPwd(v => !v); setPwdError(null); setPwdSuccess(false); }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 4 }}
+          >
+            <Tile t={t} name="key" tone="accent" size={40} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700', fontSize: 14.5, color: t.text }}>Changer le mot de passe</Text>
+              <Text style={{ fontSize: 12, color: t.text2, marginTop: 1 }}>Modifier votre mot de passe actuel</Text>
+            </View>
+            <Ic name={showPwd ? 'chevD' : 'chevR'} size={18} color={t.text3} sw={2} />
+          </TouchableOpacity>
+
+          {showPwd && (
+            <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: t.border }}>
+              {pwdError && (
+                <View style={{ backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 10, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600' }}>{pwdError}</Text>
                 </View>
-              );
-            })}
-            {org.plan_abonnement && (
-              <View className="mt-3 self-start px-3 py-1 bg-purple-50 rounded-full">
-                <Text className="text-xs font-bold text-purple-600 capitalize">{org.plan_abonnement}</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Compte */}
-        <View className="bg-white rounded-2xl border border-gray-100">
-          <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider px-4 pt-4 pb-2">Compte</Text>
-          {[
-            { label: 'Changer le mot de passe', icon: Key, color: '#6b7280' },
-            { label: 'Sécurité', icon: Shield, color: '#6b7280' },
-          ].map((item, i) => {
-            const Icon = item.icon;
-            return (
+              )}
+              {pwdSuccess && (
+                <View style={{ backgroundColor: 'rgba(34,197,94,0.1)', borderRadius: 10, padding: 10, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 13, color: '#22c55e', fontWeight: '600' }}>Mot de passe modifié avec succès.</Text>
+                </View>
+              )}
+              <Text style={{ fontSize: 12, color: t.text2, marginBottom: 6, fontWeight: '600' }}>Mot de passe actuel</Text>
+              <TextInput
+                style={inputStyle} value={oldPwd} onChangeText={setOldPwd}
+                secureTextEntry placeholder="••••••••"
+                placeholderTextColor={t.text3}
+              />
+              <Text style={{ fontSize: 12, color: t.text2, marginBottom: 6, fontWeight: '600' }}>Nouveau mot de passe</Text>
+              <TextInput
+                style={inputStyle} value={newPwd} onChangeText={setNewPwd}
+                secureTextEntry placeholder="••••••••"
+                placeholderTextColor={t.text3}
+              />
+              <Text style={{ fontSize: 12, color: t.text2, marginBottom: 6, fontWeight: '600' }}>Confirmer</Text>
+              <TextInput
+                style={inputStyle} value={confirmPwd} onChangeText={setConfirmPwd}
+                secureTextEntry placeholder="••••••••"
+                placeholderTextColor={t.text3}
+              />
               <TouchableOpacity
-                key={item.label}
-                className={`flex-row items-center gap-3 px-4 py-3.5 ${i > 0 ? 'border-t border-gray-50' : ''}`}
-                activeOpacity={0.7}
+                onPress={handleChangePassword}
+                disabled={pwdLoading}
+                activeOpacity={0.8}
+                style={{ backgroundColor: t.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 4, opacity: pwdLoading ? 0.6 : 1 }}
               >
-                <View className="w-8 h-8 rounded-xl bg-gray-100 items-center justify-center">
-                  <Icon size={15} color={item.color} />
-                </View>
-                <Text className="flex-1 text-sm font-semibold text-gray-800">{item.label}</Text>
-                <ChevronRight size={16} color="#d1d5db" />
+                {pwdLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={{ fontWeight: '700', fontSize: 14, color: '#fff' }}>Enregistrer</Text>
+                }
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            </View>
+          )}
+        </Card>
+
+        {/* Informations légales */}
+        <Section label="Informations légales" />
+        <Card t={t} pad={14} style={{ marginBottom: 22 }}>
+          {[
+            { icon: 'shield', title: 'Politique de confidentialité', sub: 'Traitement de vos données',  onPress: openPrivacy,      last: false },
+            { icon: 'contract', title: "Conditions d'utilisation",   sub: 'Règles du service',          onPress: openTerms,        last: false },
+            { icon: 'alert',  title: 'Suppression des données',      sub: 'Demander la suppression',    onPress: openDataDeletion, last: true  },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.title}
+              activeOpacity={0.7}
+              onPress={item.onPress}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 13, borderBottomWidth: item.last ? 0 : 1, borderBottomColor: t.border }}
+            >
+              <Tile t={t} name={item.icon} tone="neutral" size={40} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '700', fontSize: 14.5, color: t.text }}>{item.title}</Text>
+                <Text style={{ fontSize: 12, color: t.text2, marginTop: 1 }}>{item.sub}</Text>
+              </View>
+              <Ic name="chevR" size={18} color={t.text3} sw={2} />
+            </TouchableOpacity>
+          ))}
+        </Card>
+
+        {/* À propos */}
+        <Section label="À propos" />
+        <Card t={t} pad={14} style={{ marginBottom: 22 }}>
+          <KV t={t} k="Version" v="1.0.0" />
+          <KV t={t} k="Plateforme" v="AfrydexImmo" last />
+        </Card>
 
         {/* Déconnexion */}
-        <TouchableOpacity
-          className="bg-red-50 rounded-2xl border border-red-100 flex-row items-center gap-3 px-4 py-3.5"
-          onPress={signOut}
-          activeOpacity={0.7}
-        >
-          <View className="w-8 h-8 rounded-xl bg-red-100 items-center justify-center">
-            <LogOut size={15} color="#dc2626" />
-          </View>
-          <Text className="flex-1 text-sm font-semibold text-red-600">Se déconnecter</Text>
-        </TouchableOpacity>
-
-        <Text className="text-center text-xs text-gray-300 pb-4">Afrydex Immo v1.0</Text>
+        <Card t={t} pad={14} style={{ marginBottom: 32 }}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={signOut}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 4 }}
+          >
+            <Tile t={t} name="logout" tone="danger" size={40} />
+            <Text style={{ fontWeight: '700', fontSize: 14.5, color: t.dangerText, flex: 1 }}>Déconnexion</Text>
+          </TouchableOpacity>
+        </Card>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

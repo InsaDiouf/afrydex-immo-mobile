@@ -36,6 +36,7 @@ export default function LocataireLayout() {
       <Tabs.Screen name="maintenance" options={{ title: 'Signalement', tabBarIcon: ({ color, size }) => <Wrench color={color} size={size - 2} /> }} />
       <Tabs.Screen name="documents" options={{ title: 'Documents', tabBarIcon: ({ color, size }) => <FolderOpen color={color} size={size - 2} /> }} />
       <Tabs.Screen name="contract-detail" options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="settings" options={{ tabBarButton: () => null, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );
 }

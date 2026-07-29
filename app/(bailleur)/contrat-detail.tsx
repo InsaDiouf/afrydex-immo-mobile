@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
@@ -253,7 +253,7 @@ export default function ContratDetail() {
   const { data: workflow, isLoading: loadingWf } = useQuery({
     queryKey: ['bailleur-contrat-workflow', id],
     queryFn: async () => {
-      const { data } = await api.get('/pmo/workflows/', { params: { contrat: id } });
+      const { data } = await api.get('/contracts/pmo/workflows/', { params: { contrat: id } });
       return data?.results?.[0] ?? null;
     },
     enabled: !!id,
@@ -269,13 +269,15 @@ export default function ContratDetail() {
     if (!workflow) return;
     setSigningContract(true);
     try {
-      await api.post(`/pmo/workflows/${workflow.id}/contrat/sign-bailleur/`, {
+      await api.post(`/contracts/pmo/workflows/${workflow.id}/contrat/sign-bailleur/`, {
         signature_image: imageBase64,
       });
       reload();
     } catch (e: any) {
-      // Error is swallowed silently — the UI will reflect actual state after reload
-      console.warn('Erreur signature contrat:', e?.response?.data?.error ?? e.message);
+      Alert.alert(
+        'Signature impossible',
+        e?.response?.data?.error ?? "La signature du contrat n'a pas pu être enregistrée. Réessaie."
+      );
     } finally {
       setSigningContract(false);
     }
@@ -285,12 +287,15 @@ export default function ContratDetail() {
     if (!workflow) return;
     setSigningInventory(true);
     try {
-      await api.post(`/pmo/workflows/${workflow.id}/etat-lieux/sign/`, {
+      await api.post(`/contracts/pmo/workflows/${workflow.id}/etat-lieux/sign/`, {
         signature_image: imageBase64,
       });
       reload();
     } catch (e: any) {
-      console.warn("Erreur signature EDL:", e?.response?.data?.error ?? e.message);
+      Alert.alert(
+        'Signature impossible',
+        e?.response?.data?.error ?? "La signature de l'état des lieux n'a pas pu être enregistrée. Réessaie."
+      );
     } finally {
       setSigningInventory(false);
     }

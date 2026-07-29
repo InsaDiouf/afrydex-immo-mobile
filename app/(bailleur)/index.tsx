@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
-import { ScrollView, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Building2, FileText, TrendingUp, CreditCard, FolderOpen, MapPin, Settings, ArrowRight } from 'lucide-react-native';
 import { useAuth } from '@/ctx/auth';
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api';
+import { QueryError } from '@/components/common/QueryError';
 
 export default function BailleurDashboard() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const { data: dashData, isLoading: loadingDash } = useQuery({
+  const { data: dashData, isLoading: loadingDash, isError: errDash, refetch: refetchDash, isRefetching } = useQuery({
     queryKey: ['bailleur-dashboard'],
     queryFn: async () => {
       const { data } = await api.get('/dashboard/');
@@ -18,7 +19,7 @@ export default function BailleurDashboard() {
     },
   });
 
-  const { data: contractsData, isLoading: loadingContracts } = useQuery({
+  const { data: contractsData, isLoading: loadingContracts, isError: errContracts, refetch: refetchContracts } = useQuery({
     queryKey: ['bailleur-contracts-recent'],
     queryFn: async () => {
       const { data } = await api.get('/contracts/', { params: { statut: 'actif', limit: 4 } });
@@ -28,6 +29,8 @@ export default function BailleurDashboard() {
 
   const contracts = contractsData?.results ?? [];
   const isLoading = loadingDash || loadingContracts;
+  const isError = errDash || errContracts;
+  const refetchAll = () => { refetchDash(); refetchContracts(); };
 
   const quickActions = [
     { label: 'Mes biens', icon: Building2, color: '#7c3aed', bg: '#f5f3ff', route: '/(bailleur)/properties' },
@@ -49,7 +52,11 @@ export default function BailleurDashboard() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 p-4" contentContainerStyle={{ gap: 12 }}>
+      <ScrollView
+        className="flex-1 p-4"
+        contentContainerStyle={{ gap: 12 }}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetchAll} tintColor="#7c3aed" />}
+      >
         {/* Revenue card */}
         <View className="rounded-2xl p-5" style={{ backgroundColor: '#7c3aed' }}>
           <Text className="text-xs font-semibold" style={{ color: '#c4b5fd' }}>Revenus du mois</Text>
@@ -144,6 +151,8 @@ export default function BailleurDashboard() {
             <ActivityIndicator color="#7c3aed" />
           </View>
         )}
+
+        {!isLoading && isError && <QueryError onRetry={refetchAll} accent="#7c3aed" />}
       </ScrollView>
     </SafeAreaView>
   );
