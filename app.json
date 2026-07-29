@@ -14,7 +14,6 @@
     },
     "ios": {
       "bundleIdentifier": "com.afrydex.immo",
-      "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -23,7 +22,6 @@
     },
     "android": {
       "package": "com.afrydex.immo",
-      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
