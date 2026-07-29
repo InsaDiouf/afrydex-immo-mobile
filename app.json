@@ -64,6 +64,13 @@
           "cameraPermission": "Autoriser $(PRODUCT_NAME) à utiliser l'appareil photo pour photographier les travaux depuis le chantier."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8ff71c54-33af-411b-b6a0-8ba0c7117078"
+      }
+    },
+    "owner": "insadjr"
   }
 }
