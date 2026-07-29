@@ -78,23 +78,28 @@ les numéros de build sont gérés par EAS, il n'y a rien à incrémenter à la 
 
 ## 5. Comptes de démonstration (App Review)
 
-Vérifiés fonctionnels sur la production.
+Un compte par portail, à fournir aux équipes de review Apple et Google.
 
 | Portail | Identifiant | Mot de passe |
 |---|---|---|
 | Agence (admin) | `demo@afrydex.com` | `Demo2026Afrydex!` |
 | Employé | `cheikh.mbaye@demo-afrydex.sn` | `Demo2026Employe!` |
+| Locataire | `locataire@demo-afrydex.sn` | `Demo2026Locataire!` |
+| Bailleur | `bailleur@demo-afrydex.sn` | `Demo2026Bailleur!` |
 
 Régénérer le jeu de données de démo :
 ```bash
-python manage.py create_demo_agency
+python manage.py create_demo_agency --reset
 ```
 
-> **À faire avant soumission** : la commande ne crée pas de compte **locataire** ni **bailleur**
-> (ces tiers n'ont pas de compte utilisateur associé dans le jeu de démo). Les reviewers ne
-> pourraient donc pas voir 2 des 4 portails. Créer deux comptes de démo supplémentaires
-> (`user_type='tenant'` et `user_type='landlord'`) rattachés à des tiers de l'agence démo,
-> et les ajouter à ce tableau.
+Les comptes locataire et bailleur sont rattachés à des **tiers ayant un bail réel** : l'API
+filtre sur `locataire__user` et `appartement__residence__proprietaire__user`, un compte non
+rattaché ouvrirait un portail vide. Filtrage vérifié en local : 1 contrat visible côté
+locataire, 3 côté bailleur, 5 côté agence.
+
+> **État actuel** : seuls les comptes agence et employé existent en production. Les comptes
+> locataire et bailleur ont été ajoutés à la commande mais **pas encore créés sur Railway** —
+> voir §10.
 
 ---
 
@@ -165,7 +170,56 @@ l'URL de demande de suppression des données (§7).
 - [ ] Mode avion → messages d'erreur clairs, aucun écran blanc
 - [ ] Upload de photo de travaux (appareil photo **et** galerie)
 - [ ] Signature manuscrite testée côté **locataire et bailleur**
-- [ ] Comptes de démo locataire et bailleur créés (§5)
+- [ ] Backend redéployé (pages légales + durcissement + comptes de démo, §10)
+- [ ] Comptes de démo locataire et bailleur vérifiés en production (§5)
 - [ ] Captures d'écran iPhone 6.7" et 6.5"
 - [ ] Icône Play Store 512×512 et feature graphic 1024×500
 - [ ] URL de politique de confidentialité renseignée dans les deux consoles
+
+---
+
+## 10. Déploiement backend requis avant soumission
+
+Les changements backend sont commités sur la branche `chore/legal-pages-and-hardening`
+du dépôt `afrydexImmoBackend`, **non poussée et non déployée**. Tant qu'ils ne sont pas
+en production :
+
+- les URL `/privacy/`, `/terms/` et `/data-deletion/` renvoient **404** — les consoles Apple
+  et Google rejettent les fiches dont l'URL de confidentialité est invalide ;
+- les comptes de démo locataire et bailleur n'existent pas ;
+- le durcissement (`ALLOWED_HOSTS`, CORS, superuser sans mot de passe en dur) n'est pas actif.
+
+### Procédure
+
+```bash
+cd afrydexImmoBackend
+git push -u origin chore/legal-pages-and-hardening
+# fusionner dans main, puis laisser Railway redéployer
+```
+
+Puis créer les comptes de démo, depuis un shell Railway :
+
+```bash
+python manage.py create_demo_agency --reset
+```
+
+> `--reset` **supprime et recrée** l'organisation `agence-demo` (contrats, factures, travaux
+> de démonstration inclus). Sans danger pour les agences réelles, qui ont un autre slug — mais
+> à lancer en connaissance de cause.
+
+### Vérifications après déploiement
+
+```bash
+curl -o /dev/null -w "%{http_code}\n" https://afrydex.up.railway.app/privacy/        # 200
+curl -o /dev/null -w "%{http_code}\n" https://afrydex.up.railway.app/data-deletion/  # 200
+curl -o /dev/null -w "%{http_code}\n" https://afrydex.up.railway.app/health/         # 200
+
+curl -s -X POST https://afrydex.up.railway.app/api/v1/auth/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"locataire@demo-afrydex.sn","password":"Demo2026Locataire!"}' \
+  -o /dev/null -w "%{http_code}\n"                                                   # 200
+```
+
+Surveiller aussi le frontend Vercel : `CORS_ALLOW_ALL_ORIGINS` passe à `False`. L'origine
+Vercel reste couverte par le motif `^https://.*\.vercel\.app$`, mais un domaine personnalisé
+non listé serait bloqué — l'ajouter alors à `CORS_ALLOWED_ORIGINS`.
