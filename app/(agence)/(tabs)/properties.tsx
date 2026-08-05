@@ -141,13 +141,22 @@ export default function PropertiesScreen() {
     return `/residences/${qs ? `?${qs}` : ''}`;
   };
 
+  const buildAppartementsQuery = () => {
+    const params = new URLSearchParams();
+    if (secteurId) params.set('residence__secteur', String(secteurId));
+    if (patrimoine === 'Nos biens') params.set('residence__proprietaire__est_agence', 'true');
+    if (patrimoine === 'Propriétaires') params.set('residence__proprietaire__est_agence', 'false');
+    const qs = params.toString();
+    return `/appartements/${qs ? `?${qs}` : ''}`;
+  };
+
   const residencesQuery = useQuery<{ results: Residence[] }>({
     queryKey: ['residences', secteurId ?? null, patrimoine],
     queryFn: async () => { const { data } = await api.get(buildResidencesQuery()); return data; },
   });
   const appartementsQuery = useQuery<{ results: Appartement[] }>({
-    queryKey: ['appartements'],
-    queryFn: async () => { const { data } = await api.get('/appartements/'); return data; },
+    queryKey: ['appartements', secteurId ?? null, patrimoine],
+    queryFn: async () => { const { data } = await api.get(buildAppartementsQuery()); return data; },
   });
 
   const residences = (residencesQuery.data?.results ?? []).filter(r => !search || r.nom.toLowerCase().includes(search.toLowerCase()));
@@ -175,19 +184,17 @@ export default function PropertiesScreen() {
           />
         </View>
 
-        {/* Filtres résidences : patrimoine + secteur */}
-        {seg === 'Résidences' && (
-          <View style={{ marginTop: 12, gap: 10 }}>
+        {/* Filtres biens : patrimoine + secteur (résidences ET appartements) */}
+        <View style={{ marginTop: 12, gap: 10 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            <Chips t={t} items={PATRIMOINE_FILTERS} active={patrimoine} onSelect={setPatrimoine} />
+          </ScrollView>
+          {secteurs.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              <Chips t={t} items={PATRIMOINE_FILTERS} active={patrimoine} onSelect={setPatrimoine} />
+              <Chips t={t} items={['Tous', ...secteurs.map(s => s.nom)]} active={secteurNom} onSelect={setSecteurNom} />
             </ScrollView>
-            {secteurs.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                <Chips t={t} items={['Tous', ...secteurs.map(s => s.nom)]} active={secteurNom} onSelect={setSecteurNom} />
-              </ScrollView>
-            )}
-          </View>
-        )}
+          )}
+        </View>
       </View>
 
       {isLoading ? (
