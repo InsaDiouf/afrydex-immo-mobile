@@ -43,7 +43,12 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
+      [
+        "expo-secure-store",
+        {
+          "faceIDPermission": false
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -60,7 +65,8 @@
         "expo-image-picker",
         {
           "photosPermission": "Autoriser $(PRODUCT_NAME) à accéder à vos photos pour illustrer les fiches de travaux.",
-          "cameraPermission": "Autoriser $(PRODUCT_NAME) à utiliser l'appareil photo pour photographier les travaux depuis le chantier."
+          "cameraPermission": "Autoriser $(PRODUCT_NAME) à utiliser l'appareil photo pour photographier les travaux depuis le chantier.",
+          "microphonePermission": false
         }
       ]
     ],
