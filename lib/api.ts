@@ -58,6 +58,8 @@ async function refreshAccessToken(): Promise<string> {
   if (!refresh) throw new Error('No refresh token');
   const { data } = await axios.post(`${API_URL}/auth/refresh/`, { refresh }, { timeout: 20000 });
   await SecureStore.setItemAsync('access_token', data.access);
+  // Rotation : l'API renvoie un nouveau refresh et invalide l'ancien
+  if (data.refresh) await SecureStore.setItemAsync('refresh_token', data.refresh);
   return data.access;
 }
 

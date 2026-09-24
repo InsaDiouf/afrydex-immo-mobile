@@ -50,7 +50,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
 }
 
 function portalRoute(userType: string) {
-  if (userType === 'admin' || userType === 'manager' || userType === 'accountant') return '/(agence)';
+  // admin, caissier, contentieux : espace agence (l'API applique les droits de chaque profil)
   if (userType === 'landlord') return '/(bailleur)';
   if (userType === 'tenant') return '/(locataire)';
   if (userType === 'employe') return '/(employe)';
