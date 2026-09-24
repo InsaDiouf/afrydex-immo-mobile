@@ -461,13 +461,32 @@ export default function ContratDetail() {
                   </Text>
                 </View>
               )}
-              {contract.frais_agence && Number(contract.frais_agence) > 0 && (
-                <View style={{ width: '50%' }}>
-                  <Text className="text-xs text-gray-400">Frais d'agence</Text>
-                  <Text className="text-base font-bold text-gray-900 mt-0.5">
-                    {Number(contract.frais_agence).toLocaleString('fr-FR')} FCFA
-                  </Text>
-                </View>
+              {/* Reversement calculé par l'API selon la politique de l'agence */}
+              {contract.reversement_mensuel && (
+                <>
+                  <View style={{ width: '50%' }}>
+                    <Text className="text-xs text-gray-400">
+                      Commission de gestion ({Number(contract.reversement_mensuel.commission_pct)} %)
+                    </Text>
+                    <Text className="text-base font-bold text-gray-900 mt-0.5">
+                      − {Number(contract.reversement_mensuel.commission).toLocaleString('fr-FR')} FCFA
+                    </Text>
+                  </View>
+                  {Number(contract.reversement_mensuel.tom) > 0 && (
+                    <View style={{ width: '50%' }}>
+                      <Text className="text-xs text-gray-400">TOM ({Number(contract.reversement_mensuel.tom_pct)} %)</Text>
+                      <Text className="text-base font-bold text-gray-900 mt-0.5">
+                        − {Number(contract.reversement_mensuel.tom).toLocaleString('fr-FR')} FCFA
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ width: '50%' }}>
+                    <Text className="text-xs text-gray-400">Net reversé / mois</Text>
+                    <Text className="text-base font-bold mt-0.5" style={{ color: '#16a34a' }}>
+                      {Number(contract.reversement_mensuel.net).toLocaleString('fr-FR')} FCFA
+                    </Text>
+                  </View>
+                </>
               )}
             </View>
           </View>
