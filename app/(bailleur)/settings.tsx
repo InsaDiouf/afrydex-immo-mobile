@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   ArrowLeft, Mail, Phone, MapPin, User,
-  Shield, Key, ChevronRight, LogOut, Building2,
+  Key, ChevronRight, LogOut, Building2, Shield, FileText, Trash2, LifeBuoy,
 } from 'lucide-react-native';
 import { useAuth } from '@/ctx/auth';
 import { api } from '@/lib/api';
+import { openPrivacy, openTerms, openDataDeletion, openSupport } from '@/lib/legal';
 
 interface TiersInfo {
   id: number;
@@ -104,8 +105,16 @@ export default function BailleurSettings() {
         <View className="bg-white rounded-2xl border border-gray-100">
           <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider px-4 pt-4 pb-2">Compte</Text>
           {[
-            { label: 'Changer le mot de passe', icon: Key, color: '#6b7280' },
-            { label: 'Sécurité', icon: Shield, color: '#6b7280' },
+            {
+              label: 'Changer le mot de passe',
+              icon: Key,
+              color: '#6b7280',
+              onPress: () => router.push('/(auth)/change-password'),
+            },
+            { label: 'Politique de confidentialité', icon: Shield,   color: '#6b7280', onPress: openPrivacy },
+            { label: "Conditions d'utilisation",     icon: FileText, color: '#6b7280', onPress: openTerms },
+            { label: 'Suppression des données',      icon: Trash2,   color: '#6b7280', onPress: openDataDeletion },
+            { label: 'Aide & support',               icon: LifeBuoy, color: '#6b7280', onPress: openSupport },
           ].map((item, i) => {
             const Icon = item.icon;
             return (
@@ -113,6 +122,7 @@ export default function BailleurSettings() {
                 key={item.label}
                 className={`flex-row items-center gap-3 px-4 py-3.5 ${i > 0 ? 'border-t border-gray-50' : ''}`}
                 activeOpacity={0.7}
+                onPress={item.onPress}
               >
                 <View className="w-8 h-8 rounded-xl bg-gray-100 items-center justify-center">
                   <Icon size={15} color={item.color} />

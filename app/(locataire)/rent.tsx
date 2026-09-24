@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FlatList, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { FlatList, View, Text, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditCard, CheckCircle2, Clock, XCircle, Calendar } from 'lucide-react-native';
 import { api } from '@/lib/api';
+import { QueryError } from '@/components/common/QueryError';
 
 interface Invoice {
   id: number;
@@ -26,7 +27,7 @@ const FILTERS = ['Tous', 'En attente', 'Payés', 'En retard'] as const;
 export default function LocataireRent() {
   const [filter, setFilter] = useState<typeof FILTERS[number]>('Tous');
 
-  const { data, isLoading } = useQuery<{ results: Invoice[] }>({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery<{ results: Invoice[] }>({
     queryKey: ['locataire-invoices'],
     queryFn: async () => {
       const { data } = await api.get('/invoices/');
@@ -91,11 +92,14 @@ export default function LocataireRent() {
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator color="#16a34a" />
         </View>
+      ) : isError ? (
+        <QueryError onRetry={refetch} />
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={{ padding: 16, paddingTop: 0, gap: 10 }}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#16a34a" />}
           renderItem={({ item }) => {
             const s = STATUS[item.statut] ?? STATUS.en_attente;
             return (

@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { TrendingUp, Clock, Calendar, CheckCircle2, CreditCard } from 'lucide-react-native';
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { QueryError } from '@/components/common/QueryError';
 
 const FILTERS = ['Tous', 'Payés', 'En attente', 'En retard'] as const;
 
@@ -17,7 +18,7 @@ const STATUS: Record<string, { bg: string; text: string; label: string }> = {
 export default function BailleurPayments() {
   const [filter, setFilter] = useState<typeof FILTERS[number]>('Tous');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['bailleur-invoices'],
     queryFn: async () => {
       const { data } = await api.get('/invoices/');
@@ -49,7 +50,11 @@ export default function BailleurPayments() {
         <Text className="text-xs text-gray-400 mt-0.5">Suivi des encaissements</Text>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, gap: 12 }}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#7c3aed" />}
+      >
         {/* Summary */}
         <View className="flex-row gap-3">
           <View className="flex-1 rounded-2xl border border-gray-100 bg-white p-4">
@@ -101,6 +106,8 @@ export default function BailleurPayments() {
           <View className="items-center py-12">
             <ActivityIndicator color="#7c3aed" />
           </View>
+        ) : isError ? (
+          <QueryError onRetry={refetch} accent="#7c3aed" />
         ) : filtered.length === 0 ? (
           <View className="bg-white rounded-2xl border border-gray-100 p-10 items-center">
             <CreditCard size={36} color="#d1d5db" />

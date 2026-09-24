@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ScrollView, View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  FileText, CreditCard, Wrench, Home, LogOut, MapPin, Calendar, FolderOpen, ChevronRight,
+  FileText, CreditCard, Wrench, Home, Settings, MapPin, Calendar, FolderOpen, ChevronRight,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/ctx/auth';
@@ -39,7 +39,7 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 export default function LocataireDashboard() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   const { data: contract, isLoading: loadingContract } = useQuery<Contract | null>({
@@ -88,8 +88,12 @@ export default function LocataireDashboard() {
           <Text className="text-xs text-green-600 font-semibold">Portail Locataire</Text>
           <Text className="text-base font-bold text-gray-900">Bonjour, {user?.first_name} 👋</Text>
         </View>
-        <TouchableOpacity onPress={signOut} className="p-2 rounded-xl bg-gray-100" activeOpacity={0.7}>
-          <LogOut size={18} color="#6b7280" />
+        <TouchableOpacity
+          onPress={() => router.push('/(locataire)/settings')}
+          className="p-2 rounded-xl bg-gray-100"
+          activeOpacity={0.7}
+        >
+          <Settings size={18} color="#6b7280" />
         </TouchableOpacity>
       </View>
 

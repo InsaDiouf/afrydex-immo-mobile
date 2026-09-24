@@ -43,14 +43,6 @@ export default function BailleurDocuments() {
       bg: '#f5f3ff',
       route: '/(bailleur)/properties',
     },
-    {
-      label: 'États des lieux',
-      desc: 'Documents de remise de clés',
-      icon: ClipboardList,
-      color: '#d97706',
-      bg: '#fffbeb',
-      route: null,
-    },
   ];
 
   return (
@@ -68,8 +60,8 @@ export default function BailleurDocuments() {
               <TouchableOpacity
                 key={doc.label}
                 className={`flex-row items-center gap-3 px-4 py-4 ${i > 0 ? 'border-t border-gray-100' : ''}`}
-                activeOpacity={doc.route ? 0.7 : 1}
-                onPress={() => doc.route && router.push(doc.route as any)}
+                activeOpacity={0.7}
+                onPress={() => router.push(doc.route as any)}
               >
                 <View className="w-10 h-10 rounded-xl items-center justify-center" style={{ backgroundColor: doc.bg }}>
                   <Icon size={18} color={doc.color} />
@@ -78,13 +70,7 @@ export default function BailleurDocuments() {
                   <Text className="text-sm font-semibold text-gray-900">{doc.label}</Text>
                   <Text className="text-xs text-gray-400 mt-0.5">{doc.desc}</Text>
                 </View>
-                {doc.route ? (
-                  <ChevronRight size={16} color="#d1d5db" />
-                ) : (
-                  <View className="px-2 py-1 rounded-full bg-gray-100">
-                    <Text className="text-[10px] text-gray-400 font-semibold">Bientôt</Text>
-                  </View>
-                )}
+                <ChevronRight size={16} color="#d1d5db" />
               </TouchableOpacity>
             );
           })}
