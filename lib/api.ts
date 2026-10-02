@@ -85,3 +85,19 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Télécharge un PDF protégé puis ouvre la feuille de partage (imprimer, WhatsApp, e-mail…).
+// On passe par `api` (et non un téléchargement natif) pour garder le JWT et son refresh.
+export async function sharePdf(path: string, filename: string, dialogTitle?: string) {
+  const { File, Paths } = await import('expo-file-system');
+  const Sharing = await import('expo-sharing');
+
+  const { data } = await api.get<ArrayBuffer>(path, { responseType: 'arraybuffer' });
+  const file = new File(Paths.cache, filename);
+  if (file.exists) file.delete();
+  file.create();
+  file.write(new Uint8Array(data));
+
+  if (!(await Sharing.isAvailableAsync())) throw new Error('Partage indisponible sur cet appareil');
+  await Sharing.shareAsync(file.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle });
+}
