@@ -13,16 +13,20 @@ interface Payment {
   appartement_nom?: string;
   montant: number;
   statut: string;
+  moyen_paiement?: string;
   date_paiement?: string;
   date_echeance?: string;
 }
 
-interface PaymentsOverview {
-  total_encaisse?: number;
-  nb_recus?: number;
-  nb_retard?: number;
-  total_impaye?: number;
+interface PaymentsPage {
   results?: Payment[];
+}
+
+// Synthèse du mois : GET /payments/recap/?periode=mois
+interface RecapMois {
+  total_encaisse: number;
+  nb_paiements: number;
+  impayes: { nb_retard: number; total_impaye: number };
 }
 
 interface NamedRef { id: number; nom: string; }
@@ -32,7 +36,14 @@ function asList<T>(raw: any): T[] {
   return Array.isArray(raw) ? raw : (raw?.results ?? []);
 }
 
-const FILTERS = ['Tous', 'Reçu', 'En retard', 'Mobile Money'];
+const FILTERS = ['Tous', 'Validé', 'Annulé', 'Mobile Money'];
+const MOBILE_MONEY = ['wave', 'orange_money'];
+const STATUTS: Record<string, { label: string; tone: 'success' | 'danger' | 'warn' }> = {
+  valide: { label: 'Validé', tone: 'success' },
+  annule: { label: 'Annulé', tone: 'danger' },
+  refuse: { label: 'Refusé', tone: 'danger' },
+  en_attente: { label: 'En attente', tone: 'warn' },
+};
 
 export default function PaymentsScreen() {
   const { theme: t } = useAgencyTheme();
@@ -71,7 +82,18 @@ export default function PaymentsScreen() {
     return `/payments/${qs ? `?${qs}` : ''}`;
   };
 
-  const { data, isLoading } = useQuery<PaymentsOverview>({
+  const { data: recap } = useQuery<RecapMois>({
+    queryKey: ['payments-recap', 'mois-courant', secteurId ?? null, batimentId ?? null],
+    queryFn: async () => {
+      const params = new URLSearchParams({ periode: 'mois' });
+      if (secteurId) params.set('secteur', String(secteurId));
+      if (batimentId) params.set('residence', String(batimentId));
+      const { data } = await api.get(`/payments/recap/?${params}`);
+      return data;
+    },
+  });
+
+  const { data, isLoading } = useQuery<PaymentsPage>({
     queryKey: ['payments', secteurId ?? null, batimentId ?? null, occupant?.id ?? null],
     queryFn: async () => { const { data } = await api.get(buildPaymentsQuery()); return data; },
   });
@@ -81,8 +103,9 @@ export default function PaymentsScreen() {
 
   const all = data?.results ?? [];
   const payments = filter === 'Tous' ? all : all.filter(p => {
-    if (filter === 'Reçu')     return p.statut?.toLowerCase() === 'reçu' || p.statut?.toLowerCase() === 'recu';
-    if (filter === 'En retard') return p.statut?.toLowerCase() === 'en retard' || p.statut?.toLowerCase() === 'en_retard';
+    if (filter === 'Validé') return p.statut === 'valide';
+    if (filter === 'Annulé') return p.statut === 'annule';
+    if (filter === 'Mobile Money') return MOBILE_MONEY.includes(p.moyen_paiement ?? '');
     return true;
   });
 
@@ -97,24 +120,28 @@ export default function PaymentsScreen() {
         ListHeaderComponent={
           <View style={{ padding: 20, paddingTop: 6 }}>
             {/* Hero card */}
-            <View style={{ borderRadius: 22, padding: 18, backgroundColor: t.heroFrom, ...(t.shadow as any) }}>
+            <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/(agence)/recap')}
+              style={{ borderRadius: 22, padding: 18, backgroundColor: t.heroFrom, ...(t.shadow as any) }}>
               <Text style={{ fontWeight: '600', fontSize: 13, color: 'rgba(255,255,255,0.82)' }}>Encaissé ce mois</Text>
               <Text style={{ fontWeight: '700', fontSize: 30, color: '#fff', letterSpacing: -0.8, marginTop: 6 }}>
-                {fmt(data?.total_encaisse ?? 0)}<Text style={{ fontSize: 14, fontWeight: '600', opacity: 0.85 }}> FCFA</Text>
+                {fmt(Number(recap?.total_encaisse ?? 0))}<Text style={{ fontSize: 14, fontWeight: '600', opacity: 0.85 }}> FCFA</Text>
               </Text>
               <View style={{ flexDirection: 'row', gap: 20, marginTop: 14 }}>
                 {[
-                  [String(data?.nb_recus ?? 0), 'reçus'],
-                  [String(data?.nb_retard ?? 0), 'en retard'],
-                  [data?.total_impaye ? `${Math.round(data.total_impaye / 1000)}k` : '0', 'impayés'],
+                  [String(recap?.nb_paiements ?? 0), 'paiements'],
+                  [String(recap?.impayes.nb_retard ?? 0), 'en retard'],
+                  [recap?.impayes.total_impaye ? `${Math.round(Number(recap.impayes.total_impaye) / 1000)}k` : '0', 'impayés'],
                 ].map(([val, label]) => (
                   <View key={label}>
                     <Text style={{ fontWeight: '700', fontSize: 16, color: '#fff' }}>{val}</Text>
                     <Text style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>{label}</Text>
                   </View>
                 ))}
+                <View style={{ flex: 1, alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.85)' }}>Récapitulatif ›</Text>
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
 
             {/* Filters */}
             <View style={{ marginTop: 18, marginBottom: 12, gap: 10 }}>
@@ -156,8 +183,9 @@ export default function PaymentsScreen() {
         contentContainerStyle={{ paddingHorizontal: 20 }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item, index }) => {
-          const received = item.statut?.toLowerCase().includes('reçu') || item.statut?.toLowerCase().includes('recu');
-          const tone = received ? 'success' as const : 'danger' as const;
+          const statut = STATUTS[item.statut] ?? { label: item.statut, tone: 'warn' as const };
+          const received = item.statut === 'valide';
+          const tone = statut.tone;
           const dateStr = item.date_paiement
             ? new Date(item.date_paiement).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
             : item.date_echeance
@@ -176,7 +204,7 @@ export default function PaymentsScreen() {
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontWeight: '700', fontSize: 14, color: t.text }}>{Number(item.montant).toLocaleString('fr-FR')}</Text>
-                <View style={{ marginTop: 4 }}><Badge t={t} tone={tone}>{received ? 'Reçu' : 'En retard'}</Badge></View>
+                <View style={{ marginTop: 4 }}><Badge t={t} tone={tone}>{statut.label}</Badge></View>
               </View>
             </TouchableOpacity>
           );

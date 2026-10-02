@@ -59,7 +59,7 @@ export default function MoreScreen() {
               <Text style={{ fontWeight: '700', fontSize: 17, color: t.text, letterSpacing: -0.2 }}>{name}</Text>
               <Text style={{ fontSize: 12.5, color: t.text2, marginTop: 2 }} numberOfLines={1}>{user?.email}</Text>
             </View>
-            <Badge t={t} tone="info">{user?.user_type === 'manager' ? 'Manager' : user?.user_type === 'admin' ? 'Admin' : 'Comptable'}</Badge>
+            <Badge t={t} tone="info">{user?.user_type === 'caissier' ? 'Caissier' : user?.user_type === 'contentieux' ? 'Contentieux' : 'Admin'}</Badge>
           </View>
         </Card>
 
@@ -67,6 +67,7 @@ export default function MoreScreen() {
         <Text style={{ fontWeight: '700', fontSize: 13, color: t.text2, marginTop: 22, marginBottom: 9, letterSpacing: 0.5, textTransform: 'uppercase' }}>Gestion</Text>
         <Card t={t} pad={14}>
           <MenuItem t={t} icon="coins"  tone="accent"   title="Paiements"         sub="Loyers encaissés & impayés"   badge={data?.impayés}                        onPress={() => router.push('/(agence)/payments')} />
+          <MenuItem t={t} icon="receipt" tone="info"     title="Récapitulatifs"    sub="Encaissements du jour & du mois"         onPress={() => router.push('/(agence)/recap')} />
           <MenuItem t={t} icon="cart"   tone="warn"     title="Demandes d'achat"  sub="Matériaux & fournitures"       badge={data?.total_demandes_achat_en_attente} onPress={() => router.push('/(agence)/purchase-requests')} />
           <MenuItem t={t} icon="coins"  tone="danger"   title="Dépenses"          sub="Totaux par bâtiment / occupant"          onPress={() => router.push('/(agence)/expenses')} />
           <MenuItem t={t} icon="users"  tone="info"     title="Employés"          sub="Techniciens & staff"                     onPress={() => router.push('/(agence)/employees')} last />

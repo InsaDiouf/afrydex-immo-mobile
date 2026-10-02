@@ -68,7 +68,8 @@
           "cameraPermission": "Autoriser $(PRODUCT_NAME) à utiliser l'appareil photo pour photographier les travaux depuis le chantier.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "extra": {
       "router": {},

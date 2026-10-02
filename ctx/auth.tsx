@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import * as SecureStore from 'expo-secure-store';
 import { api, setSessionExpiredHandler } from '@/lib/api';
 
-type UserType = 'admin' | 'manager' | 'landlord' | 'tenant' | 'employe' | 'accountant';
+type UserType = 'admin' | 'caissier' | 'contentieux' | 'manager' | 'landlord' | 'tenant' | 'employe' | 'accountant';
 
 interface AuthUser {
   id: number;
