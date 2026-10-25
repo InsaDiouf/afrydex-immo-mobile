@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAgencyTheme } from '@/ctx/agencyTheme';
 import { api } from '@/lib/api';
 import { Card, Badge, Btn, KV, Row, Divider, Ic, Progress, DetailHeader, money } from '@/components/agence/ui';
+import RenewalCard, { type Renouvellement } from '@/components/agence/RenewalCard';
+import { useAuth } from '@/ctx/auth';
 
 interface ContractDetail {
   id: number;
@@ -23,6 +25,7 @@ interface ContractDetail {
   proprietaire_nom?: string;
   proprietaire_contact?: string;
   documents?: { nom: string; date?: string; url?: string }[];
+  renouvellement?: Renouvellement | null;
 }
 
 function ContractBadge({ t, statut }: { t: any; statut: string }) {
@@ -54,6 +57,7 @@ export default function ContractDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme: t } = useAgencyTheme();
   const router = useRouter();
+  const { user } = useAuth();
 
   const { data: c, isLoading } = useQuery<ContractDetail>({
     queryKey: ['contract', id],
@@ -105,6 +109,9 @@ export default function ContractDetailScreen() {
 
         {/* Parties */}
         <Text style={{ fontWeight: '700', fontSize: 15, color: t.text, marginTop: 22, marginBottom: 11, letterSpacing: -0.2 }}>Parties</Text>
+        {/* Fin de bail : renouvellement à confirmer (admin) */}
+        <RenewalCard t={t} contractId={id} r={c?.renouvellement} canDecide={user?.user_type === 'admin'} />
+
         <Card t={t} pad={14}>
           <Row t={t} title={c?.locataire_nom ?? '—'} sub="Locataire"
             right={

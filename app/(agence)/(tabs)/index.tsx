@@ -42,6 +42,12 @@ export default function AgenceDashboard() {
   const { user } = useAuth();
   const { theme: t } = useAgencyTheme();
   const router = useRouter();
+  // Cloche : nombre de notifications non lues (rafraîchi toutes les minutes)
+  const { data: nonLues } = useQuery<number>({
+    queryKey: ['notifications', 'non-lues'],
+    queryFn: async () => { const { data } = await api.get('/notifications/non-lues/'); return data.count; },
+    refetchInterval: 60_000,
+  });
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery<DashboardData>({
     queryKey: ['dashboard'],
@@ -64,7 +70,7 @@ export default function AgenceDashboard() {
             {user?.first_name} {user?.last_name}
           </Text>
         </View>
-        <IconBtn t={t} name="bell" badge />
+        <IconBtn t={t} name="bell" badge={!!nonLues} onPress={() => router.push('/(agence)/notifications' as any)} />
       </View>
 
       {isLoading ? (
