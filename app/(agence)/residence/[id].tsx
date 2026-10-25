@@ -26,15 +26,17 @@ interface Residence {
   photo_principale_url?: string | null;
 }
 
+// Occupation déduite des contrats par l'API : libre, occupe ou reserve
+const APT_STATUS: Record<string, { label: string; tone: 'success' | 'warn' | 'info' }> = {
+  occupe: { label: 'Occupé', tone: 'success' },
+  reserve: { label: 'Réservé', tone: 'info' },
+  libre: { label: 'Libre', tone: 'warn' },
+  maintenance: { label: 'Travaux', tone: 'info' },
+};
+
 function AptStatusBadge({ t, statut }: { t: any; statut: string }) {
-  const map: Record<string, 'success' | 'warn' | 'info'> = {
-    occupé: 'success', occupe: 'success',
-    vacant: 'warn',
-    travaux: 'info',
-  };
-  const tone = map[statut?.toLowerCase()] ?? ('neutral' as any);
-  const label = statut?.charAt(0).toUpperCase() + statut?.slice(1);
-  return <Badge t={t} tone={tone}>{label}</Badge>;
+  const s = APT_STATUS[statut] ?? { label: statut, tone: 'neutral' as any };
+  return <Badge t={t} tone={s.tone}>{s.label}</Badge>;
 }
 
 export default function ResidenceDetailScreen() {
